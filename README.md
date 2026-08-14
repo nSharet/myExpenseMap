@@ -18,6 +18,7 @@ After GitHub Pages is enabled, the application is published at:
 - File-type and 15 MB size validation.
 - A preview of the planned validation, normalization, and categorization pipeline.
 - Interactive drill-down: total expenses → domain → category → month → transactions.
+- Switchable ranked-list and interactive pie/donut chart views with the same drill-down behavior.
 - Search and sorting at the relevant levels.
 - Manual correction for one record or all matching transactions from a normalized merchant.
 - Browser-local classification rules with JSON export.
