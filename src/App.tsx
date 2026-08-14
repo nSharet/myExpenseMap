@@ -4,15 +4,18 @@ import seedRules from "../data/demo-category-rules.json";
 import { applyClassificationRules, countRuleMatches, normalizeMerchant } from "./classification";
 import { createI18n, detectLanguage, locales, supportedLanguages, type Language } from "./i18n";
 import Onboarding from "./Onboarding";
+import PieChartView from "./PieChartView";
 import type { ClassificationRule, EffectiveExpense, ExpenseRecord } from "./types";
 
 type Level = "root" | "domain" | "category" | "month";
 type Crumb = { level: Level; value?: string };
 type Group = { name: string; amount: number; count: number };
+type ViewMode = "list" | "pie";
 type I18n = ReturnType<typeof createI18n>;
 
 const STORAGE_KEY = "interactive-expense-explorer.demo-rules.v1";
 const LANGUAGE_KEY = "interactive-expense-explorer.language";
+const VIEW_MODE_KEY = "my-expense-map.view-mode";
 const palette = ["#00a896", "#f4a261", "#3a86ff", "#e76f51", "#7b61ff", "#2a9d8f", "#ef476f", "#457b9d"];
 const records = expenseData as ExpenseRecord[];
 const initialPath: Crumb[] = [{ level: "root" }];
@@ -21,6 +24,9 @@ function sum(items: EffectiveExpense[]) { return items.reduce((total, row) => to
 function readRules(): ClassificationRule[] {
   try { const saved = localStorage.getItem(STORAGE_KEY); return saved ? JSON.parse(saved) as ClassificationRule[] : seedRules as ClassificationRule[]; }
   catch { return seedRules as ClassificationRule[]; }
+}
+function readViewMode(): ViewMode {
+  return localStorage.getItem(VIEW_MODE_KEY) === "pie" ? "pie" : "list";
 }
 
 export default function App() {
@@ -32,11 +38,13 @@ export default function App() {
   const [path, setPath] = useState<Crumb[]>(initialPath);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<"amount" | "name">("amount");
+  const [viewMode, setViewMode] = useState<ViewMode>(readViewMode);
   const [editing, setEditing] = useState<EffectiveExpense | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [notice, setNotice] = useState("");
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(rules)); }, [rules]);
+  useEffect(() => { localStorage.setItem(VIEW_MODE_KEY, viewMode); }, [viewMode]);
   useEffect(() => {
     localStorage.setItem(LANGUAGE_KEY, language);
     document.documentElement.lang = language;
@@ -125,7 +133,22 @@ export default function App() {
       })}</nav>
       <section className="hero"><div><p className="eyebrow">{current.level === "month" ? t("transactionDetails") : t("drillDown")}</p><h1>{displayCurrent}</h1><p className="subtitle">{t("includedTransactions", { count: i18n.formatInteger(scoped.length) })}</p></div><div className="total-card"><span>{t("viewTotal")}</span><strong>{i18n.formatMoney(total)}</strong><small>{t("shareOfTotal", { percent: i18n.formatPercent(total/overall) })}</small></div></section>
 
-      {nextKey ? <><div className="toolbar"><div><b>{i18n.formatInteger(groups.length)}</b> {t(nextKey === "domain" ? "domains" : nextKey === "category" ? "categories" : "months")}</div><label>{t("sort")}<select value={sort} onChange={(event) => setSort(event.target.value as "amount"|"name")}><option value="amount">{t("sortAmount")}</option><option value="name">{t("sortName")}</option></select></label></div><section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className="expense-row" key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,group.amount/max*100)}%`,background:palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(group.amount/total)}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section><p className="hint">{t("interactionHint")}</p></>
+      {nextKey ? <>
+        <div className="toolbar">
+          <div><b>{i18n.formatInteger(groups.length)}</b> {t(nextKey === "domain" ? "domains" : nextKey === "category" ? "categories" : "months")}</div>
+          <div className="toolbar-actions">
+            <div className="view-toggle" role="group" aria-label={t("viewMode")}>
+              <button className={viewMode === "list" ? "active" : ""} aria-pressed={viewMode === "list"} onClick={() => setViewMode("list")}>{t("listView")}</button>
+              <button className={viewMode === "pie" ? "active" : ""} aria-pressed={viewMode === "pie"} onClick={() => setViewMode("pie")}>{t("pieChartView")}</button>
+            </div>
+            <label>{t("sort")}<select value={sort} onChange={(event) => setSort(event.target.value as "amount"|"name")}><option value="amount">{t("sortAmount")}</option><option value="name">{t("sortName")}</option></select></label>
+          </div>
+        </div>
+        {viewMode === "list" ? <>
+          <section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className="expense-row" key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,group.amount/max*100)}%`,background:palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(group.amount/total)}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section>
+          <p className="hint">{t("interactionHint")}</p>
+        </> : <PieChartView groups={groups} palette={palette} title={t("pieChartTitle", { name: displayCurrent })} totalLabel={t("viewTotal")} total={total} displayGroup={displayGroup} formatAmount={i18n.formatMoney} formatInteger={i18n.formatInteger} formatPercent={i18n.formatPercent} transactionLabel={t("transactions")} sliceLabel={(name, amount, percent) => t("pieSliceLabel", { name, amount, percent })} onOpen={open} />}
+      </>
       : <section className="records"><div className="records-head"><div><h2>{t("recordsTitle")}</h2><p>{t("recordsDescription")}</p></div><label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPlaceholder")} /></label></div><div className="table-wrap"><table><thead><tr><th>{t("date")}</th><th>{t("merchant")}</th><th>{t("classification")}</th><th>{t("card")}</th><th>{t("amount")}</th><th></th></tr></thead><tbody>{visibleRows.map((row) => <tr key={row.id}><td>{row.date ? i18n.formatDate(row.date) : "—"}</td><td><b>{row.merchant}</b><small>{row.owner}</small></td><td><span>{i18n.labelTaxonomy(row.category)}</span>{row.appliedRuleId && <small className="corrected">{t("corrected")}</small>}</td><td>{row.card ? `•••• ${row.card}` : "—"}</td><td className={row.amount < 0 ? "credit" : ""}>{i18n.formatMoney(row.amount)}</td><td><button className="edit-button" onClick={() => setEditing(row)}>{t("changeClassification")}</button></td></tr>)}</tbody><tfoot><tr><td colSpan={5}>{t("totalRecords", { count: i18n.formatInteger(visibleRows.length) })}</td><td>{i18n.formatMoney(sum(visibleRows))}</td></tr></tfoot></table></div></section>}
     </div>
 

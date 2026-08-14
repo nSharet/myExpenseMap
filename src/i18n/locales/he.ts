@@ -41,6 +41,8 @@ const messages = {
   processingStageValidate: "בדיקת מבנה הקבצים", processingStageNormalize: "נרמול העסקאות", processingStageCategorize: "הצעת קטגוריות",
   processingReady: "עיבוד הדמו הסתיים", openExplorer: "פתיחת סייר ההוצאות", demoMode: "נתוני דמו",
   demoNotice: "מוצגים נתוני דוגמה סינתטיים. אף קובץ שנבחר לא נקרא או נשלח.", backHome: "חזרה לדף הראשי", startOver: "בחירת קבצים אחרים",
+  viewMode: "תצוגה", listView: "רשימה", pieChartView: "גרף עוגה", pieChartTitle: "פילוח ההוצאות עבור {name}",
+  pieSliceLabel: "פתיחת {name}: {amount}, {percent}",
 } satisfies TranslationMessages;
 
 export const heLocale = defineLocale({

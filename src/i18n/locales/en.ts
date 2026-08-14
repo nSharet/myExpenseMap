@@ -41,6 +41,8 @@ const messages = {
   processingStageValidate: "Validate file structure", processingStageNormalize: "Normalize transactions", processingStageCategorize: "Suggest categories",
   processingReady: "Demo processing is complete", openExplorer: "Open the expense explorer", demoMode: "Demo data",
   demoNotice: "You are viewing synthetic sample data. No selected file was read or uploaded.", backHome: "Back to home", startOver: "Choose different files",
+  viewMode: "View", listView: "List", pieChartView: "Pie chart", pieChartTitle: "Expense distribution for {name}",
+  pieSliceLabel: "Open {name}: {amount}, {percent}",
 } satisfies TranslationMessages;
 
 export const enLocale = defineLocale({
