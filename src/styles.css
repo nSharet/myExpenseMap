@@ -44,14 +44,52 @@
 .donut-card,.pie-legend{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 16px 50px #16332f0d}
 .donut-card{display:grid;place-items:center;padding:24px;min-height:420px}
 .donut-chart{width:min(100%,390px);overflow:visible}
-.donut-slice{fill-rule:evenodd;cursor:pointer;stroke:#fff;stroke-width:2;transition:transform .18s,filter .18s;transform-origin:120px 120px}
+.donut-slice{fill-rule:evenodd;cursor:pointer;stroke:#fff;stroke-width:2;transition:transform .18s,filter .18s;transform-origin:140px 140px}
 .donut-slice:hover,.donut-slice:focus-visible{transform:scale(1.025);filter:drop-shadow(0 5px 5px #16332f35);outline:none}
 .donut-total-label{font-size:9px;fill:var(--muted);pointer-events:none}
 .donut-total-value{font-size:13px;font-weight:800;fill:var(--ink);pointer-events:none}
+.donut-icon{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:14px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.donut-icon-inside{font-size:15px;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.donut-external-icon polyline{fill:none;stroke:#8da6a0;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
+.donut-external-icon circle{fill:#fff;stroke:#cbdad6;stroke-width:1}
 .pie-legend{display:flex;flex-direction:column;overflow:hidden}
-.pie-legend button{display:grid;grid-template-columns:14px minmax(0,1fr) auto;align-items:center;gap:12px;border:0;border-bottom:1px solid var(--line);background:#fff;padding:15px 17px;text-align:start;cursor:pointer;transition:background .15s}
+.pie-legend button{display:grid;grid-template-columns:28px 12px minmax(0,1fr) auto;align-items:center;gap:10px;border:0;border-bottom:1px solid var(--line);background:#fff;padding:15px 17px;text-align:start;cursor:pointer;transition:background .15s}
 .pie-legend button:last-child{border-bottom:0}.pie-legend button:hover,.pie-legend button:focus-visible{background:var(--mint);outline:none}
+.legend-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--mint);font-size:16px}
 .legend-color{width:11px;height:11px;border-radius:50%}
 .legend-name,.legend-value{min-width:0}.legend-name b,.legend-name small,.legend-value b,.legend-value small{display:block}.legend-name b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.legend-name small,.legend-value small{color:var(--muted);font-size:11px;margin-top:4px}.legend-value{text-align:end}.legend-value b{white-space:nowrap}
 @media(max-width:820px){.pie-view{grid-template-columns:1fr}.donut-card{min-height:340px}.donut-chart{max-width:330px}}
 @media(max-width:720px){.toolbar{align-items:flex-start;gap:12px;flex-direction:column}.toolbar-actions{width:100%;justify-content:space-between;flex-wrap:wrap}.view-toggle{flex:1}.view-toggle button{flex:1}.pie-view{gap:14px;margin-top:15px}.donut-card{padding:15px;min-height:310px}.donut-chart{max-width:290px}.pie-legend button{padding:13px}}
+.print-button{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 11px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;white-space:nowrap}
+.print-button:hover,.print-button:focus-visible{border-color:#9fc9bf;background:var(--mint);outline:none}
+.print-button span{font-size:17px;line-height:1}
+.records-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex:1}
+.records-tools .search{flex:1}
+
+@media(max-width:720px){.records-tools{width:100%;align-items:stretch;flex-direction:column}.records-tools .search{width:100%}.toolbar-actions .print-button{order:3;width:100%;justify-content:center}}
+
+@media print{
+  @page{size:A4;margin:12mm}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  html,body{background:#fff!important}
+  body{font-size:11pt}
+  .topbar,.demo-notice,.breadcrumbs,.toolbar,.hint,.search,.edit-button,.toast,.modal-backdrop{display:none!important}
+  .shell{max-width:none;padding:0}
+  .hero{padding:0 0 16px;align-items:end}
+  .hero h1{font-size:28pt;letter-spacing:-1px}
+  .total-card{box-shadow:none;min-width:220px;padding:14px 18px}
+  .pie-view{display:block;margin-top:0}
+  .donut-card{min-height:0;height:112mm;padding:8mm;box-shadow:none;break-inside:avoid}
+  .donut-chart{width:100%;height:100%;max-width:none}
+  .pie-legend{margin-top:7mm;box-shadow:none;break-inside:auto}
+  .pie-legend button{break-inside:avoid;padding:9px 12px}
+  .explorer,.expense-row,.records,tr{break-inside:avoid}
+  .records{box-shadow:none;overflow:visible}
+  .records-head{padding:14px 16px}
+  .records-tools{display:none}
+  .table-wrap{overflow:visible;max-height:none}
+  table{min-width:0;font-size:9pt}
+  th,td{padding:7px 8px}
+  th{position:static}
+  tfoot td{position:static}
+}

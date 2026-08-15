@@ -42,7 +42,8 @@ const messages = {
   processingReady: "עיבוד הדמו הסתיים", openExplorer: "פתיחת סייר ההוצאות", demoMode: "נתוני דמו",
   demoNotice: "מוצגים נתוני דוגמה סינתטיים. אף קובץ שנבחר לא נקרא או נשלח.", backHome: "חזרה לדף הראשי", startOver: "בחירת קבצים אחרים",
   viewMode: "תצוגה", listView: "רשימה", pieChartView: "גרף עוגה", pieChartTitle: "פילוח ההוצאות עבור {name}",
-  pieSliceLabel: "פתיחת {name}: {amount}, {percent}",
+  pieSliceLabel: "פתיחת {name}: {amount}, {percent}", printReport: "הדפסה / PDF",
+  printReportHint: "הדפסת תצוגת ההוצאות או שמירתה כקובץ PDF",
 } satisfies TranslationMessages;
 
 export const heLocale = defineLocale({
