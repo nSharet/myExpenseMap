@@ -42,7 +42,8 @@ const messages = {
   processingReady: "Demo processing is complete", openExplorer: "Open the expense explorer", demoMode: "Demo data",
   demoNotice: "You are viewing synthetic sample data. No selected file was read or uploaded.", backHome: "Back to home", startOver: "Choose different files",
   viewMode: "View", listView: "List", pieChartView: "Pie chart", pieChartTitle: "Expense distribution for {name}",
-  pieSliceLabel: "Open {name}: {amount}, {percent}",
+  pieSliceLabel: "Open {name}: {amount}, {percent}", printReport: "Print / PDF",
+  printReportHint: "Print this expense view or save it as a PDF",
 } satisfies TranslationMessages;
 
 export const enLocale = defineLocale({

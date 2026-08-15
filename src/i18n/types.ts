@@ -16,7 +16,7 @@ export const translationKeys = [
   "selectedFiles", "removeFile", "processDemo", "invalidFileType", "fileTooLarge", "processingTitle",
   "processingDescription", "processingStageValidate", "processingStageNormalize", "processingStageCategorize",
   "processingReady", "openExplorer", "demoMode", "demoNotice", "backHome", "startOver",
-  "viewMode", "listView", "pieChartView", "pieChartTitle", "pieSliceLabel",
+  "viewMode", "listView", "pieChartView", "pieChartTitle", "pieSliceLabel", "printReport", "printReportHint",
 ] as const;
 
 export type TranslationKey = typeof translationKeys[number];

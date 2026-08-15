@@ -19,6 +19,8 @@ After GitHub Pages is enabled, the application is published at:
 - A preview of the planned validation, normalization, and categorization pipeline.
 - Interactive drill-down: total expenses → domain → category → month → transactions.
 - Switchable ranked-list and interactive pie/donut chart views with the same drill-down behavior.
+- Category emoji labels inside large slices and outside small slices with connector lines.
+- Print-friendly reports that include the current chart/list and detail, with browser PDF export.
 - Search and sorting at the relevant levels.
 - Manual correction for one record or all matching transactions from a normalized merchant.
 - Browser-local classification rules with JSON export.
