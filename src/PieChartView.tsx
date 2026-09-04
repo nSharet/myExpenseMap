@@ -1,5 +1,5 @@
-import { useMemo, type KeyboardEvent } from "react";
-import { buildPieLabelPositions, buildPieSlices } from "./pie-chart";
+import { useMemo, useState, type KeyboardEvent } from "react";
+import { buildPieActiveIconPosition, buildPieSlices } from "./pie-chart";
 
 type PieGroup = { name: string; amount: number; count: number };
 
@@ -23,7 +23,11 @@ const geometry = { center: 140, outerRadius: 96, innerRadius: 54 };
 
 export default function PieChartView({ groups, palette, title, totalLabel, total, displayGroup, formatAmount, formatInteger, formatPercent, transactionLabel, sliceLabel, iconForGroup, onOpen }: Props) {
   const slices = useMemo(() => buildPieSlices(groups, (group) => group.amount, geometry), [groups]);
-  const labelPositions = useMemo(() => buildPieLabelPositions(slices, geometry), [slices]);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const activeIndex = hoveredIndex ?? focusedIndex;
+  const activeSlice = activeIndex === null ? null : slices[activeIndex];
+  const activeIconPosition = activeSlice?.path ? buildPieActiveIconPosition(activeSlice, geometry) : null;
 
   function handleKey(event: KeyboardEvent, group: PieGroup) {
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -45,19 +49,17 @@ export default function PieChartView({ groups, palette, title, totalLabel, total
           aria-label={sliceLabel(displayGroup(slice.item), formatAmount(slice.item.amount), formatPercent(slice.percentage))}
           onClick={() => onOpen(slice.item)}
           onKeyDown={(event) => handleKey(event, slice.item)}
+          onMouseEnter={() => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
+          onFocus={() => setFocusedIndex(index)}
+          onBlur={() => setFocusedIndex(null)}
         />)}
-        {slices.map((slice, index) => {
-          if (!slice.path) return null;
-          const position = labelPositions[index];
-          const icon = iconForGroup(slice.item);
-          return position.placement === "inside"
-            ? <text key={`icon-${slice.item.name}`} x={position.x} y={position.y} className="donut-icon donut-icon-inside" aria-hidden="true">{icon}</text>
-            : <g key={`icon-${slice.item.name}`} className="donut-external-icon" aria-hidden="true">
-                <polyline points={position.points} />
-                <circle cx={position.x} cy={position.y} r="11" />
-                <text x={position.x} y={position.y} className="donut-icon">{icon}</text>
-              </g>;
-        })}
+        {activeSlice && activeIconPosition && <text
+          x={activeIconPosition.x}
+          y={activeIconPosition.y}
+          className="donut-active-icon"
+          aria-hidden="true"
+        >{iconForGroup(activeSlice.item)}</text>}
         <text x="140" y="132" textAnchor="middle" className="donut-total-label">{totalLabel}</text>
         <text x="140" y="156" textAnchor="middle" className="donut-total-value">{formatAmount(total)}</text>
       </svg>
