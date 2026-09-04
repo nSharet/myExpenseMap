@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPieLabelPositions, buildPieSlices, createDonutPath } from "./pie-chart";
+import { buildPieActiveIconPosition, buildPieSlices, createDonutPath } from "./pie-chart";
 
 describe("pie chart geometry", () => {
   it("creates proportional, contiguous slices", () => {
@@ -24,19 +24,26 @@ describe("pie chart geometry", () => {
     expect(createDonutPath(0, Math.PI, 40, 40)).toBe("");
   });
 
-  it("places large-slice icons inside and separates small external labels", () => {
+  it("positions an active icon beside the midpoint of any slice", () => {
     const geometry = { center: 140, outerRadius: 96, innerRadius: 54 };
-    const slices = buildPieSlices([{ value: 72 }, { value: 7 }, { value: 7 }, { value: 7 }, { value: 7 }], (item) => item.value, geometry);
-    const positions = buildPieLabelPositions(slices, geometry);
-    expect(positions[0].placement).toBe("inside");
-    expect(positions.slice(1).every((position) => position.placement === "outside" && position.points)).toBe(true);
-    expect(positions.every((position) => Number.isFinite(position.x) && Number.isFinite(position.y))).toBe(true);
+    const slices = buildPieSlices([{ value: 99 }, { value: 1 }], (item) => item.value, geometry);
+    const largePosition = buildPieActiveIconPosition(slices[0], geometry);
+    const smallPosition = buildPieActiveIconPosition(slices[1], geometry);
 
-    const bySide = [-1, 1].map((side) => positions
-      .filter((position) => position.placement === "outside" && Math.sign(position.x - geometry.center) === side)
-      .sort((a, b) => a.y - b.y));
-    bySide.forEach((side) => side.slice(1).forEach((position, index) => {
-      expect(position.y - side[index].y).toBeGreaterThanOrEqual(24);
-    }));
+    expect(largePosition.x).toBeCloseTo(143.58, 1);
+    expect(largePosition.y).toBeCloseTo(253.94, 1);
+    expect(smallPosition.x).toBeCloseTo(136.42, 1);
+    expect(smallPosition.y).toBeCloseTo(26.06, 1);
+  });
+
+  it("keeps active icons inside the chart view box", () => {
+    const geometry = { center: 140, outerRadius: 130, innerRadius: 54 };
+    const [slice] = buildPieSlices([{ value: 1 }], (item) => item.value, geometry);
+    const position = buildPieActiveIconPosition(slice, geometry, 40, 12);
+
+    expect(position.x).toBeGreaterThanOrEqual(12);
+    expect(position.x).toBeLessThanOrEqual(268);
+    expect(position.y).toBeGreaterThanOrEqual(12);
+    expect(position.y).toBeLessThanOrEqual(268);
   });
 });

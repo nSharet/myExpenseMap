@@ -48,10 +48,7 @@
 .donut-slice:hover,.donut-slice:focus-visible{transform:scale(1.025);filter:drop-shadow(0 5px 5px #16332f35);outline:none}
 .donut-total-label{font-size:9px;fill:var(--muted);pointer-events:none}
 .donut-total-value{font-size:13px;font-weight:800;fill:var(--ink);pointer-events:none}
-.donut-icon{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:14px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
-.donut-icon-inside{font-size:15px;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
-.donut-external-icon polyline{fill:none;stroke:#8da6a0;stroke-width:1;stroke-linecap:round;stroke-linejoin:round}
-.donut-external-icon circle{fill:#fff;stroke:#cbdad6;stroke-width:1}
+.donut-active-icon{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:18px;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
 .pie-legend{display:flex;flex-direction:column;overflow:hidden}
 .pie-legend button{display:grid;grid-template-columns:28px 12px minmax(0,1fr) auto;align-items:center;gap:10px;border:0;border-bottom:1px solid var(--line);background:#fff;padding:15px 17px;text-align:start;cursor:pointer;transition:background .15s}
 .pie-legend button:last-child{border-bottom:0}.pie-legend button:hover,.pie-legend button:focus-visible{background:var(--mint);outline:none}
