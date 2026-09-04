@@ -18,7 +18,7 @@ const STORAGE_KEY = "interactive-expense-explorer.demo-rules.v1";
 const LANGUAGE_KEY = "interactive-expense-explorer.language";
 const VIEW_MODE_KEY = "my-expense-map.view-mode";
 const palette = ["#00a896", "#f4a261", "#3a86ff", "#e76f51", "#7b61ff", "#2a9d8f", "#ef476f", "#457b9d"];
-const records = expenseData as ExpenseRecord[];
+const demoRecords = expenseData as ExpenseRecord[];
 const initialPath: Crumb[] = [{ level: "root" }];
 
 function sum(items: EffectiveExpense[]) { return items.reduce((total, row) => total + row.amount, 0); }
@@ -43,6 +43,8 @@ export default function App() {
   const [editing, setEditing] = useState<EffectiveExpense | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [notice, setNotice] = useState("");
+  const [records, setRecords] = useState<ExpenseRecord[]>(demoRecords);
+  const imported = records !== demoRecords;
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(rules)); }, [rules]);
   useEffect(() => { localStorage.setItem(VIEW_MODE_KEY, viewMode); }, [viewMode]);
@@ -113,7 +115,7 @@ export default function App() {
     const anchor = document.createElement("a"); anchor.href = url; anchor.download = "category-rules.json"; anchor.click(); URL.revokeObjectURL(url);
   }
 
-  if (screen === "onboarding") return <Onboarding i18n={i18n} language={language} onLanguageChange={setLanguage} onOpenExplorer={() => setScreen("explorer")} />;
+  if (screen === "onboarding") return <Onboarding i18n={i18n} language={language} onLanguageChange={setLanguage} onOpenExplorer={(importedRecords) => { if (importedRecords) { setRecords(importedRecords); setPath(initialPath); } setScreen("explorer"); }} />;
 
   return <main dir={i18n.direction}>
     <header className="topbar">
@@ -122,12 +124,12 @@ export default function App() {
         <button className="home-button" onClick={() => { setPath(initialPath); setScreen("onboarding"); }}>{t("backHome")}</button>
         <label className="language-picker"><span>{t("language")}</span><select value={language} onChange={(event) => setLanguage(event.target.value as Language)} aria-label={t("language")}>{supportedLanguages.map((code) => <option value={code} key={code}>{locales[code].displayName}</option>)}</select></label>
         <button className="rules-button" onClick={() => setShowRules(true)}>{t("manageClassifications")} <b>{i18n.formatInteger(rules.length)}</b></button>
-        <div className="source-pill"><span className="status-dot" /> {t("demoMode")}</div>
+        <div className="source-pill"><span className="status-dot" /> {imported ? (language === "he" ? "נתונים שיובאו" : "Imported data") : t("demoMode")}</div>
       </div>
     </header>
 
     <div className="shell">
-      <div className="demo-notice">{t("demoNotice")}</div>
+      <div className="demo-notice">{imported ? (language === "he" ? "הנתונים נשמרים בזיכרון בלבד. רענון הדף יחייב העלאה מחדש." : "Data is kept in memory only. Refreshing requires a new upload.") : t("demoNotice")}</div>
       <nav className="breadcrumbs" aria-label={t("allExpenses")}>{path.map((crumb,index) => {
         const label = crumb.level === "root" ? t("allExpenses") : crumb.level === "month" ? i18n.formatMonth(crumb.value!) : i18n.labelTaxonomy(crumb.value!);
         return <span key={`${crumb.level}-${crumb.value || "all"}`}><button onClick={() => setPath(path.slice(0,index+1))}>{label}</button>{index < path.length-1 && <i>/</i>}</span>;
