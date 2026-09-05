@@ -18,7 +18,7 @@ const STORAGE_KEY = "interactive-expense-explorer.demo-rules.v1";
 const LANGUAGE_KEY = "interactive-expense-explorer.language";
 const VIEW_MODE_KEY = "my-expense-map.view-mode";
 const palette = ["#00a896", "#f4a261", "#3a86ff", "#e76f51", "#7b61ff", "#2a9d8f", "#ef476f", "#457b9d"];
-const records = expenseData as ExpenseRecord[];
+const demoRecords = expenseData as ExpenseRecord[];
 const initialPath: Crumb[] = [{ level: "root" }];
 
 function sum(items: EffectiveExpense[]) { return items.reduce((total, row) => total + row.amount, 0); }
@@ -43,6 +43,8 @@ export default function App() {
   const [editing, setEditing] = useState<EffectiveExpense | null>(null);
   const [showRules, setShowRules] = useState(false);
   const [notice, setNotice] = useState("");
+  const [records, setRecords] = useState<ExpenseRecord[]>(demoRecords);
+  const imported = records !== demoRecords;
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(rules)); }, [rules]);
   useEffect(() => { localStorage.setItem(VIEW_MODE_KEY, viewMode); }, [viewMode]);
@@ -86,7 +88,7 @@ export default function App() {
 
   const total = sum(scoped);
   const overall = sum(effectiveRows);
-  const max = Math.max(...groups.map((group) => group.amount), 1);
+  const max = Math.max(...groups.map((group) => Math.abs(group.amount)), 1);
   const displayCurrent = current.level === "root" ? t("allExpenses") : current.level === "month" ? i18n.formatMonth(current.value!) : i18n.labelTaxonomy(current.value!);
   const displayGroup = (group: Group) => nextKey === "month" ? i18n.formatMonth(group.name) : i18n.labelTaxonomy(group.name);
 
@@ -113,7 +115,7 @@ export default function App() {
     const anchor = document.createElement("a"); anchor.href = url; anchor.download = "category-rules.json"; anchor.click(); URL.revokeObjectURL(url);
   }
 
-  if (screen === "onboarding") return <Onboarding i18n={i18n} language={language} onLanguageChange={setLanguage} onOpenExplorer={() => setScreen("explorer")} />;
+  if (screen === "onboarding") return <Onboarding i18n={i18n} language={language} onLanguageChange={setLanguage} onOpenExplorer={(importedRecords) => { if (importedRecords) { setRecords(importedRecords); setPath(initialPath); } setScreen("explorer"); }} />;
 
   return <main dir={i18n.direction}>
     <header className="topbar">
@@ -122,12 +124,12 @@ export default function App() {
         <button className="home-button" onClick={() => { setPath(initialPath); setScreen("onboarding"); }}>{t("backHome")}</button>
         <label className="language-picker"><span>{t("language")}</span><select value={language} onChange={(event) => setLanguage(event.target.value as Language)} aria-label={t("language")}>{supportedLanguages.map((code) => <option value={code} key={code}>{locales[code].displayName}</option>)}</select></label>
         <button className="rules-button" onClick={() => setShowRules(true)}>{t("manageClassifications")} <b>{i18n.formatInteger(rules.length)}</b></button>
-        <div className="source-pill"><span className="status-dot" /> {t("demoMode")}</div>
+        <div className="source-pill"><span className="status-dot" /> {imported ? (language === "he" ? "נתונים שיובאו" : "Imported data") : t("demoMode")}</div>
       </div>
     </header>
 
     <div className="shell">
-      <div className="demo-notice">{t("demoNotice")}</div>
+      <div className="demo-notice">{imported ? (language === "he" ? "הנתונים נשמרים בזיכרון בלבד. רענון הדף יחייב העלאה מחדש." : "Data is kept in memory only. Refreshing requires a new upload.") : t("demoNotice")}</div>
       <nav className="breadcrumbs" aria-label={t("allExpenses")}>{path.map((crumb,index) => {
         const label = crumb.level === "root" ? t("allExpenses") : crumb.level === "month" ? i18n.formatMonth(crumb.value!) : i18n.labelTaxonomy(crumb.value!);
         return <span key={`${crumb.level}-${crumb.value || "all"}`}><button onClick={() => setPath(path.slice(0,index+1))}>{label}</button>{index < path.length-1 && <i>/</i>}</span>;
@@ -147,7 +149,7 @@ export default function App() {
           </div>
         </div>
         {viewMode === "list" ? <>
-          <section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className="expense-row" key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,group.amount/max*100)}%`,background:palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(group.amount/total)}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section>
+          <section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className={`expense-row${group.amount < 0 ? " credit-group" : ""}`} key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,Math.abs(group.amount)/max*100)}%`,background:group.amount < 0 ? "#0aaf82" : palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(total === 0 ? 0 : group.amount/Math.abs(total))}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section>
           <p className="hint">{t("interactionHint")}</p>
         </> : <PieChartView groups={groups} palette={palette} title={t("pieChartTitle", { name: displayCurrent })} totalLabel={t("viewTotal")} total={total} displayGroup={displayGroup} formatAmount={i18n.formatMoney} formatInteger={i18n.formatInteger} formatPercent={i18n.formatPercent} transactionLabel={t("transactions")} sliceLabel={(name, amount, percent) => t("pieSliceLabel", { name, amount, percent })} iconForGroup={(group) => getExpenseIcon(group.name, nextKey)} onOpen={open} />}
       </>

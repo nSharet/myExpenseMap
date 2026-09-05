@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { locales, supportedLanguages, type Language } from "./i18n";
-import { detectFinancialFileKind, formatFileSize, validateFinancialFile, type SelectedFinancialFile } from "./imports";
+import { buildPreview, detectFinancialFileKind, formatFileSize, readFinancialFile, validateFinancialFile, type ColumnMapping, type ImportPreview, type SelectedFinancialFile } from "./imports";
 import type { createI18n } from "./i18n";
+import type { ExpenseRecord } from "./types";
 
 type I18n = ReturnType<typeof createI18n>;
-type View = "landing" | "upload" | "processing";
+type View = "landing" | "upload" | "processing" | "preview";
 
 type Props = {
   i18n: I18n;
   language: Language;
   onLanguageChange: (language: Language) => void;
-  onOpenExplorer: () => void;
+  onOpenExplorer: (records?: ExpenseRecord[]) => void;
 };
 
 export default function Onboarding({ i18n, language, onLanguageChange, onOpenExplorer }: Props) {
@@ -18,14 +19,9 @@ export default function Onboarding({ i18n, language, onLanguageChange, onOpenExp
   const [view, setView] = useState<View>("landing");
   const [files, setFiles] = useState<SelectedFinancialFile[]>([]);
   const [error, setError] = useState("");
-  const [processingStep, setProcessingStep] = useState(0);
+  const [previews, setPreviews] = useState<ImportPreview[]>([]);
+  const [processing, setProcessing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (view !== "processing" || processingStep >= 3) return;
-    const timer = window.setTimeout(() => setProcessingStep((step) => step + 1), 650);
-    return () => window.clearTimeout(timer);
-  }, [view, processingStep]);
 
   function addFiles(incoming: File[]) {
     setError("");
@@ -36,7 +32,7 @@ export default function Onboarding({ i18n, language, onLanguageChange, onOpenExp
         setError(t(validationError === "unsupported-type" ? "invalidFileType" : "fileTooLarge"));
         continue;
       }
-      accepted.push({ id: `${file.name}-${file.size}-${file.lastModified}`, name: file.name, size: file.size, kind: detectFinancialFileKind(file.name) });
+      accepted.push({ id: `${file.name}-${file.size}-${file.lastModified}`, name: file.name, size: file.size, kind: detectFinancialFileKind(file.name), file });
     }
     setFiles((current) => [...current, ...accepted.filter((candidate) => !current.some((item) => item.id === candidate.id))]);
   }
@@ -52,6 +48,23 @@ export default function Onboarding({ i18n, language, onLanguageChange, onOpenExp
   }
 
   const sourceLabel = (kind: SelectedFinancialFile["kind"]) => t(kind === "credit-card" ? "creditCard" : kind === "bank-account" ? "bankAccount" : "financialReport");
+  const copy = language === "he" ? {
+    process:"ניתוח קבצים מקומי", preview:"בדיקה לפני הייבוא", privacy:"הנתונים עובדו בדפדפן בלבד ולא נשלחו או נשמרו.", map:"יש למפות את עמודות החובה", date:"תאריך", merchant:"בית עסק / תיאור", amount:"סכום חיוב", rows:"עסקאות תקינות", skipped:"שורות שנדחו", duplicates:"כפילויות שלא ייובאו", confirm:"אישור ופתיחת המפה", failed:"לא ניתן לקרוא את הקובץ", back:"חזרה לקבצים",
+  } : { process:"Process files locally", preview:"Review before import", privacy:"Data was processed only in this browser and was not sent or stored.", map:"Map the required columns", date:"Date", merchant:"Merchant / description", amount:"Charged amount", rows:"valid transactions", skipped:"skipped rows", duplicates:"duplicates excluded", confirm:"Confirm and open expense map", failed:"The file could not be read", back:"Back to files" };
+
+  async function processFiles() {
+    setError(""); setProcessing(true); setView("processing");
+    try {
+      const tables = (await Promise.all(files.map(readFinancialFile))).flat();
+      if (!tables.length) throw new Error("No transaction table was found.");
+      const seen = new Set<string>(); setPreviews(tables.map((table) => buildPreview(table, undefined, seen))); setView("preview");
+    } catch (reason) { setError(`${copy.failed}: ${reason instanceof Error ? reason.message : String(reason)}`); setView("upload"); }
+    finally { setProcessing(false); }
+  }
+
+  function updateMapping(index: number, field: "date"|"merchant"|"amount", value: string) {
+    setPreviews((current) => { const next=[...current]; const mapping:ColumnMapping={...next[index].mapping,[field]:value||undefined}; next[index]=buildPreview(next[index].table,mapping); return next; });
+  }
 
   return <main className="onboarding" dir={i18n.direction}>
     <header className="landing-header">
@@ -70,7 +83,7 @@ export default function Onboarding({ i18n, language, onLanguageChange, onOpenExp
           <p>{t("heroDescription")}</p>
           <div className="hero-actions">
             <button className="primary large-button" onClick={() => setView("upload")}>{t("uploadData")}</button>
-            <button className="secondary large-button" onClick={onOpenExplorer}>{t("exploreDemo")}</button>
+            <button className="secondary large-button" onClick={() => onOpenExplorer()}>{t("exploreDemo")}</button>
           </div>
         </div>
         <div className="preview-card" aria-hidden="true">
@@ -112,17 +125,27 @@ export default function Onboarding({ i18n, language, onLanguageChange, onOpenExp
       </div>
       {error && <p className="upload-error" role="alert">{error}</p>}
       {files.length > 0 && <section className="selected-files"><h2>{t("selectedFiles")}</h2>{files.map((file) => <article key={file.id}><span className="file-type">{file.name.split(".").pop()?.toUpperCase()}</span><div><b>{file.name}</b><small>{sourceLabel(file.kind)} · {formatFileSize(file.size, i18n.locale)}</small></div><button onClick={() => setFiles((current) => current.filter((item) => item.id !== file.id))} aria-label={t("removeFile", { name: file.name })}>×</button></article>)}</section>}
-      <div className="upload-actions"><button className="secondary" onClick={() => setView("landing")}>{t("backHome")}</button><button className="primary" disabled={!files.length} onClick={() => { setProcessingStep(0); setView("processing"); }}>{t("processDemo")}</button></div>
+      <div className="upload-actions"><button className="secondary" onClick={() => setView("landing")}>{t("backHome")}</button><button className="primary" disabled={!files.length || processing} onClick={processFiles}>{copy.process}</button></div>
     </section>}
 
     {view === "processing" && <section className="processing-shell">
-      <div className="processing-orbit"><span>{processingStep >= 3 ? "✓" : processingStep + 1}</span></div>
-      <p className="eyebrow">{processingStep >= 3 ? t("processingReady") : t("processDemo")}</p>
+      <div className="processing-orbit"><span>…</span></div>
+      <p className="eyebrow">{copy.process}</p>
       <h1>{t("processingTitle")}</h1><p>{t("processingDescription")}</p>
       <div className="processing-list">
-        {["processingStageValidate", "processingStageNormalize", "processingStageCategorize"].map((key, index) => <div className={processingStep > index ? "done" : processingStep === index ? "active" : ""} key={key}><span>{processingStep > index ? "✓" : index + 1}</span><b>{t(key as Parameters<typeof t>[0])}</b></div>)}
+        {["processingStageValidate", "processingStageNormalize", "processingStageCategorize"].map((key, index) => <div className="active" key={key}><span>{index + 1}</span><b>{t(key as Parameters<typeof t>[0])}</b></div>)}
       </div>
-      {processingStep >= 3 && <div className="processing-actions"><button className="secondary" onClick={() => setView("upload")}>{t("startOver")}</button><button className="primary" onClick={onOpenExplorer}>{t("openExplorer")}</button></div>}
+    </section>}
+
+    {view === "preview" && <section className="upload-shell import-preview">
+      <div className="upload-heading"><p className="eyebrow">{copy.process}</p><h1>{copy.preview}</h1><p>{copy.privacy}</p></div>
+      {previews.map((preview,index) => <article className="preview-table" key={`${preview.table.fileId}-${preview.table.sheet}`}>
+        <header><div><b>{preview.table.fileName}</b><small>{preview.table.sheet}</small></div><span>{preview.records.length} {copy.rows}</span></header>
+        {preview.needsMapping && <div className="mapping-grid"><strong>{copy.map}</strong>{(["date","merchant","amount"] as const).map((field) => <label key={field}>{copy[field]}<select value={preview.mapping[field]??""} onChange={(event)=>updateMapping(index,field,event.target.value)}><option value="">—</option>{preview.table.headers.map((header)=><option value={header} key={header}>{header}</option>)}</select></label>)}</div>}
+        <div className="diagnostic-row"><span>{preview.diagnostics.length} {copy.skipped}</span><span>{preview.duplicates} {copy.duplicates}</span></div>
+        {!!preview.records.length && <div className="table-wrap"><table><thead><tr><th>{copy.date}</th><th>{copy.merchant}</th><th>{copy.amount}</th></tr></thead><tbody>{preview.records.slice(0,8).map((row)=><tr key={row.id}><td>{row.date}</td><td>{row.merchant}</td><td>{i18n.formatMoney(row.amount)}</td></tr>)}</tbody></table></div>}
+      </article>)}
+      <div className="upload-actions"><button className="secondary" onClick={()=>setView("upload")}>{copy.back}</button><button className="primary" disabled={previews.some((item)=>item.needsMapping)||!previews.some((item)=>item.records.length)} onClick={()=>onOpenExplorer(previews.flatMap((item)=>item.records))}>{copy.confirm}</button></div>
     </section>}
   </main>;
 }

@@ -10,6 +10,17 @@ export type ExpenseRecord = {
   card: string;
   type: string;
   nature: string;
+  importMeta?: {
+    fileId: string;
+    fileName: string;
+    sheet: string;
+    row: number;
+    currency?: string;
+    installmentNumber?: number;
+    installmentTotal?: number;
+    originalAmount?: number;
+    warnings: string[];
+  };
 };
 
 export type ClassificationRule = {

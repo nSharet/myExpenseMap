@@ -11,12 +11,12 @@ describe("pie chart geometry", () => {
     expect(slices.every((slice) => slice.path.startsWith("M "))).toBe(true);
   });
 
-  it("keeps zero and negative groups accessible without invalid slices", () => {
+  it("keeps zero groups empty and renders credits by magnitude", () => {
     const slices = buildPieSlices([{ value: 50 }, { value: 0 }, { value: -20 }], (item) => item.value);
-    expect(slices.map((slice) => slice.percentage)).toEqual([1, 0, 0]);
-    expect(slices[0].path).toContain("A 96 96");
+    expect(slices.map((slice) => slice.percentage)).toEqual([50 / 70, 0, 20 / 70]);
     expect(slices[1].path).toBe("");
-    expect(slices[2].path).toBe("");
+    expect(slices[0].path).toContain("A 96 96");
+    expect(slices[2].path).toContain("A 96 96");
   });
 
   it("returns no geometry for invalid or empty arcs", () => {
@@ -45,5 +45,15 @@ describe("pie chart geometry", () => {
     expect(position.x).toBeLessThanOrEqual(268);
     expect(position.y).toBeGreaterThanOrEqual(12);
     expect(position.y).toBeLessThanOrEqual(268);
+  });
+
+  it("uses credit magnitude for geometry without changing the signed item", () => {
+    const items = [{ amount: 3000 }, { amount: -100 }];
+    const slices = buildPieSlices(items, (item) => item.amount);
+
+    expect(slices[0].percentage).toBeCloseTo(3000 / 3100);
+    expect(slices[1].percentage).toBeCloseTo(100 / 3100);
+    expect(slices[1].item.amount).toBe(-100);
+    expect(slices[1].path).not.toBe("");
   });
 });
