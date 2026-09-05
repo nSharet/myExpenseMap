@@ -5,11 +5,12 @@ import { applyClassificationRules, countRuleMatches, normalizeMerchant } from ".
 import { createI18n, detectLanguage, locales, supportedLanguages, type Language } from "./i18n";
 import Onboarding from "./Onboarding";
 import PieChartView from "./PieChartView";
+import ExpenseTrendPanel from "./ExpenseTrendPanel";
 import { getExpenseIcon } from "./category-icons";
 import type { ClassificationRule, EffectiveExpense, ExpenseRecord } from "./types";
 
 type Level = "root" | "domain" | "category" | "month";
-type Crumb = { level: Level; value?: string };
+type Crumb = { level: Level; value?: string; color?: string };
 type Group = { name: string; amount: number; count: number };
 type ViewMode = "list" | "pie";
 type I18n = ReturnType<typeof createI18n>;
@@ -56,7 +57,7 @@ export default function App() {
   }, [language, i18n.direction, t]);
   useEffect(() => { if (!notice) return; const timer = window.setTimeout(() => setNotice(""), 3500); return () => clearTimeout(timer); }, [notice]);
 
-  const effectiveRows = useMemo(() => applyClassificationRules(records, rules), [rules]);
+  const effectiveRows = useMemo(() => applyClassificationRules(records, rules), [records, rules]);
   const current = path[path.length - 1];
   const scoped = useMemo(() => {
     let result = effectiveRows;
@@ -66,6 +67,14 @@ export default function App() {
     if (domain) result = result.filter((x) => x.domain === domain);
     if (category) result = result.filter((x) => x.category === category);
     if (month) result = result.filter((x) => x.month === month);
+    return result;
+  }, [effectiveRows, path]);
+  const trendScoped = useMemo(() => {
+    let result = effectiveRows;
+    const domain = path.find((x) => x.level === "domain")?.value;
+    const category = path.find((x) => x.level === "category")?.value;
+    if (domain) result = result.filter((x) => x.domain === domain);
+    if (category) result = result.filter((x) => x.category === category);
     return result;
   }, [effectiveRows, path]);
 
@@ -94,7 +103,8 @@ export default function App() {
 
   function open(group: Group) {
     if (!nextKey) return;
-    setPath((previous) => [...previous, { level: nextKey, value: group.name }]);
+    const color = nextKey === "month" && current.color ? current.color : group.amount < 0 ? "#0aaf82" : palette[groups.findIndex((item) => item.name === group.name) % palette.length];
+    setPath((previous) => [...previous, { level: nextKey, value: group.name, color }]);
     setQuery("");
   }
   function saveRule(input: Omit<ClassificationRule, "id" | "createdAt" | "merchantLabel">) {
@@ -152,8 +162,9 @@ export default function App() {
           <section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className={`expense-row${group.amount < 0 ? " credit-group" : ""}`} key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,Math.abs(group.amount)/max*100)}%`,background:group.amount < 0 ? "#0aaf82" : palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(total === 0 ? 0 : group.amount/Math.abs(total))}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section>
           <p className="hint">{t("interactionHint")}</p>
         </> : <PieChartView groups={groups} palette={palette} title={t("pieChartTitle", { name: displayCurrent })} totalLabel={t("viewTotal")} total={total} displayGroup={displayGroup} formatAmount={i18n.formatMoney} formatInteger={i18n.formatInteger} formatPercent={i18n.formatPercent} transactionLabel={t("transactions")} sliceLabel={(name, amount, percent) => t("pieSliceLabel", { name, amount, percent })} iconForGroup={(group) => getExpenseIcon(group.name, nextKey)} onOpen={open} />}
+        {current.level !== "root" && <ExpenseTrendPanel records={trendScoped} rangeRecords={effectiveRows} scopeKey={path.filter((item) => item.level !== "month").map((item) => `${item.level}:${item.value}`).join("/")} title={displayCurrent} color={path.slice().reverse().find((item) => item.level !== "month" && item.color)?.color ?? palette[0]} language={language} formatAmount={i18n.formatMoney} formatInteger={i18n.formatInteger} />}
       </>
-      : <section className="records"><div className="records-head"><div><h2>{t("recordsTitle")}</h2><p>{t("recordsDescription")}</p></div><div className="records-tools"><button className="print-button" onClick={() => window.print()} title={t("printReportHint")}><span aria-hidden="true">⇩</span>{t("printReport")}</button><label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPlaceholder")} /></label></div></div><div className="table-wrap"><table><thead><tr><th>{t("date")}</th><th>{t("merchant")}</th><th>{t("classification")}</th><th>{t("card")}</th><th>{t("amount")}</th><th></th></tr></thead><tbody>{visibleRows.map((row) => <tr key={row.id}><td>{row.date ? i18n.formatDate(row.date) : "—"}</td><td><b>{row.merchant}</b><small>{row.owner}</small></td><td><span>{i18n.labelTaxonomy(row.category)}</span>{row.appliedRuleId && <small className="corrected">{t("corrected")}</small>}</td><td>{row.card ? `•••• ${row.card}` : "—"}</td><td className={row.amount < 0 ? "credit" : ""}>{i18n.formatMoney(row.amount)}</td><td><button className="edit-button" onClick={() => setEditing(row)}>{t("changeClassification")}</button></td></tr>)}</tbody><tfoot><tr><td colSpan={5}>{t("totalRecords", { count: i18n.formatInteger(visibleRows.length) })}</td><td>{i18n.formatMoney(sum(visibleRows))}</td></tr></tfoot></table></div></section>}
+      : <><section className="records"><div className="records-head"><div><h2>{t("recordsTitle")}</h2><p>{t("recordsDescription")}</p></div><div className="records-tools"><button className="print-button" onClick={() => window.print()} title={t("printReportHint")}><span aria-hidden="true">⇩</span>{t("printReport")}</button><label className="search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPlaceholder")} /></label></div></div><div className="table-wrap"><table><thead><tr><th>{t("date")}</th><th>{t("merchant")}</th><th>{t("classification")}</th><th>{t("card")}</th><th>{t("amount")}</th><th></th></tr></thead><tbody>{visibleRows.map((row) => <tr key={row.id}><td>{row.date ? i18n.formatDate(row.date) : "—"}</td><td><b>{row.merchant}</b><small>{row.owner}</small></td><td><span>{i18n.labelTaxonomy(row.category)}</span>{row.appliedRuleId && <small className="corrected">{t("corrected")}</small>}</td><td>{row.card ? `•••• ${row.card}` : "—"}</td><td className={row.amount < 0 ? "credit" : ""}>{i18n.formatMoney(row.amount)}</td><td><button className="edit-button" onClick={() => setEditing(row)}>{t("changeClassification")}</button></td></tr>)}</tbody><tfoot><tr><td colSpan={5}>{t("totalRecords", { count: i18n.formatInteger(visibleRows.length) })}</td><td>{i18n.formatMoney(sum(visibleRows))}</td></tr></tfoot></table></div></section><ExpenseTrendPanel records={trendScoped} scopeKey={path.filter((item) => item.level !== "month").map((item) => `${item.level}:${item.value}`).join("/")} title={path.find((item) => item.level === "category")?.value ? i18n.labelTaxonomy(path.find((item) => item.level === "category")!.value!) : displayCurrent} color={path.slice().reverse().find((item) => item.color)?.color ?? palette[0]} language={language} formatAmount={i18n.formatMoney} formatInteger={i18n.formatInteger} /></>}
     </div>
 
     {editing && <ClassificationDialog row={editing} allRows={effectiveRows} i18n={i18n} onClose={() => setEditing(null)} onSave={saveRule} />}
