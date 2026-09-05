@@ -88,7 +88,7 @@ export default function App() {
 
   const total = sum(scoped);
   const overall = sum(effectiveRows);
-  const max = Math.max(...groups.map((group) => group.amount), 1);
+  const max = Math.max(...groups.map((group) => Math.abs(group.amount)), 1);
   const displayCurrent = current.level === "root" ? t("allExpenses") : current.level === "month" ? i18n.formatMonth(current.value!) : i18n.labelTaxonomy(current.value!);
   const displayGroup = (group: Group) => nextKey === "month" ? i18n.formatMonth(group.name) : i18n.labelTaxonomy(group.name);
 
@@ -149,7 +149,7 @@ export default function App() {
           </div>
         </div>
         {viewMode === "list" ? <>
-          <section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className="expense-row" key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,group.amount/max*100)}%`,background:palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(group.amount/total)}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section>
+          <section className="explorer" aria-label={t("allExpenses")}>{groups.map((group,index) => <button className={`expense-row${group.amount < 0 ? " credit-group" : ""}`} key={group.name} onDoubleClick={() => open(group)} onClick={(event) => { if (event.detail === 0) open(group); }} aria-label={t("openItem", { name: displayGroup(group) })}><span className="rank">{String(index+1).padStart(2,"0")}</span><span className="row-main"><span className="row-title"><b>{displayGroup(group)}</b><em>{i18n.formatInteger(group.count)} {t("transactions")}</em></span><span className="bar-track"><span className="bar" style={{width:`${Math.max(8,Math.abs(group.amount)/max*100)}%`,background:group.amount < 0 ? "#0aaf82" : palette[index%palette.length]}} /></span></span><span className="row-value"><b>{i18n.formatMoney(group.amount)}</b><em>{i18n.formatPercent(total === 0 ? 0 : group.amount/Math.abs(total))}</em></span><span className="open-button" onClick={(event) => { event.stopPropagation(); open(group); }}>{t("open")}</span></button>)}</section>
           <p className="hint">{t("interactionHint")}</p>
         </> : <PieChartView groups={groups} palette={palette} title={t("pieChartTitle", { name: displayCurrent })} totalLabel={t("viewTotal")} total={total} displayGroup={displayGroup} formatAmount={i18n.formatMoney} formatInteger={i18n.formatInteger} formatPercent={i18n.formatPercent} transactionLabel={t("transactions")} sliceLabel={(name, amount, percent) => t("pieSliceLabel", { name, amount, percent })} iconForGroup={(group) => getExpenseIcon(group.name, nextKey)} onOpen={open} />}
       </>

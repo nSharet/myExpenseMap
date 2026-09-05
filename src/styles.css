@@ -47,13 +47,13 @@
 .donut-card{display:grid;place-items:center;padding:24px;min-height:420px}
 .donut-chart{width:min(100%,390px);overflow:visible}
 .donut-slice{fill-rule:evenodd;cursor:pointer;stroke:#fff;stroke-width:2;transition:transform .18s,filter .18s;transform-origin:140px 140px}
-.donut-slice:hover,.donut-slice:focus-visible{transform:scale(1.025);filter:drop-shadow(0 5px 5px #16332f35);outline:none}
+.donut-slice:hover,.donut-slice:focus-visible{transform:scale(1.025);filter:drop-shadow(0 5px 5px #16332f35);outline:none}.donut-slice-credit{stroke:#06785c;stroke-width:3px}.donut-slice-credit:hover,.donut-slice-credit:focus-visible{filter:drop-shadow(0 5px 6px #0aaf8266)}
 .donut-total-label{font-size:9px;fill:var(--muted);pointer-events:none}
 .donut-total-value{font-size:13px;font-weight:800;fill:var(--ink);pointer-events:none}
 .donut-active-icon{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:18px;text-anchor:middle;dominant-baseline:central;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:4px;stroke-linejoin:round}
 .pie-legend{display:flex;flex-direction:column;overflow:hidden}
 .pie-legend button{display:grid;grid-template-columns:28px 12px minmax(0,1fr) auto;align-items:center;gap:10px;border:0;border-bottom:1px solid var(--line);background:#fff;padding:15px 17px;text-align:start;cursor:pointer;transition:background .15s}
-.pie-legend button:last-child{border-bottom:0}.pie-legend button:hover,.pie-legend button:focus-visible{background:var(--mint);outline:none}
+.pie-legend button:last-child{border-bottom:0}.pie-legend button:hover,.pie-legend button:focus-visible{background:var(--mint);outline:none}.credit-group{border:2px solid #0aaf82!important;background:#f0fcf8!important}.credit-group .row-value,.credit-group .legend-value{color:#06785c}
 .legend-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:var(--mint);font-size:16px}
 .legend-color{width:11px;height:11px;border-radius:50%}
 .legend-name,.legend-value{min-width:0}.legend-name b,.legend-name small,.legend-value b,.legend-value small{display:block}.legend-name b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.legend-name small,.legend-value small{color:var(--muted);font-size:11px;margin-top:4px}.legend-value{text-align:end}.legend-value b{white-space:nowrap}

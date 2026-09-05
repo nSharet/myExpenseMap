@@ -47,7 +47,7 @@ describe("generic transaction normalization", () => {
   it("normalizes amounts, dates, installment metadata, and credits", () => {
     const preview=buildPreview(table);
     expect(preview.records[0]).toMatchObject({date:"2026-08-04",merchant:"Coffee Place",amount:25.5,nature:"Expense",importMeta:{installmentNumber:3,installmentTotal:12,originalAmount:306}});
-    expect(preview.records[1]).toMatchObject({amount:10,nature:"Credit"});
+    expect(preview.records[1]).toMatchObject({amount:-10,nature:"Credit"});
   });
 
   it("requires manual mapping when semantics are ambiguous", () => {

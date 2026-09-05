@@ -109,7 +109,7 @@ export function normalizeTable(table: RawTable, mapping: ColumnMapping, seen = n
     const combined = mapping.installment ? installment(row[mapping.installment]) : {};
     const installmentNumber = mapping.installmentNumber ? parseNumber(row[mapping.installmentNumber]) ?? undefined : combined.number;
     const installmentTotal = mapping.installmentTotal ? parseNumber(row[mapping.installmentTotal]) ?? undefined : combined.total;
-    const base = { date, merchant, amount: Math.abs(amount), card: mapping.card ? String(row[mapping.card] ?? "") : "" };
+    const base = { date, merchant, amount, card: mapping.card ? String(row[mapping.card] ?? "") : "" };
     const fingerprint = transactionFingerprint(base, installmentNumber);
     if (seen.has(fingerprint)) { duplicates++; return; } seen.add(fingerprint);
     records.push({ id:`import-${stableHash(`${table.fileId}|${table.sheet}|${index}|${fingerprint}`)}`, domain:"כספים ושונות", category:"לא מסווג", month:date.slice(0,7), ...base,

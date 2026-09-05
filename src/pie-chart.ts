@@ -63,7 +63,9 @@ export function createDonutPath(startAngle: number, endAngle: number, outerRadiu
 }
 
 export function buildPieSlices<T>(items: T[], getValue: (item: T) => number, geometry: PieGeometry = { center: 120, outerRadius: 96, innerRadius: 54 }): PieSlice<T>[] {
-  const values = items.map((item) => Math.max(0, getValue(item)));
+  // Pie geometry cannot use negative angles. Credits therefore use their
+  // absolute magnitude for area while the signed value remains on the item.
+  const values = items.map((item) => Math.abs(getValue(item)));
   const total = values.reduce((sum, value) => sum + value, 0);
   let cursor = 0;
 

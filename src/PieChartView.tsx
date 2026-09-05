@@ -42,11 +42,12 @@ export default function PieChartView({ groups, palette, title, totalLabel, total
         {slices.map((slice, index) => slice.path && <path
           key={slice.item.name}
           d={slice.path}
-          fill={palette[index % palette.length]}
-          className="donut-slice"
+          fill={slice.item.amount < 0 ? "#0aaf82" : palette[index % palette.length]}
+          className={`donut-slice${slice.item.amount < 0 ? " donut-slice-credit" : ""}`}
+          data-credit={slice.item.amount < 0 ? "true" : undefined}
           tabIndex={0}
           role="button"
-          aria-label={sliceLabel(displayGroup(slice.item), formatAmount(slice.item.amount), formatPercent(slice.percentage))}
+          aria-label={sliceLabel(displayGroup(slice.item), formatAmount(slice.item.amount), formatPercent(total === 0 ? 0 : slice.item.amount / Math.abs(total)))}
           onClick={() => onOpen(slice.item)}
           onKeyDown={(event) => handleKey(event, slice.item)}
           onMouseEnter={() => setHoveredIndex(index)}
@@ -65,11 +66,11 @@ export default function PieChartView({ groups, palette, title, totalLabel, total
       </svg>
     </div>
     <div className="pie-legend">
-      {slices.map((slice, index) => <button key={slice.item.name} onClick={() => onOpen(slice.item)}>
+      {slices.map((slice, index) => <button key={slice.item.name} className={slice.item.amount < 0 ? "credit-group" : undefined} onClick={() => onOpen(slice.item)}>
         <span className="legend-icon" aria-hidden="true">{iconForGroup(slice.item)}</span>
-        <span className="legend-color" style={{ background: palette[index % palette.length] }} />
+        <span className="legend-color" style={{ background: slice.item.amount < 0 ? "#0aaf82" : palette[index % palette.length] }} />
         <span className="legend-name"><b>{displayGroup(slice.item)}</b><small>{formatInteger(slice.item.count)} {transactionLabel}</small></span>
-        <span className="legend-value"><b>{formatAmount(slice.item.amount)}</b><small>{formatPercent(slice.percentage)}</small></span>
+        <span className="legend-value"><b>{formatAmount(slice.item.amount)}</b><small>{formatPercent(total === 0 ? 0 : slice.item.amount / Math.abs(total))}</small></span>
       </button>)}
     </div>
   </section>;
