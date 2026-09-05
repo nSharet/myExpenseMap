@@ -89,3 +89,16 @@ test("print visibility follows the disclosure state", async ({ page }) => {
   await page.emulateMedia({ media: "print" });
   await expect(page.locator(".trend-panel")).toBeVisible();
 });
+
+test("shows the localized trend control and chart in Hebrew", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("combobox", { name: "Language" }).selectOption("he");
+  await page.getByRole("button", { name: "צפייה בנתוני הדמו" }).click();
+  await page.locator(".expense-row").first().press("Enter");
+
+  const toggle = page.getByRole("button", { name: "הצג לאורך זמן" });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect(page.locator(".trend-panel")).toBeVisible();
+  await expect(page.locator("[data-testid=trend-point]").first()).toBeVisible();
+});
