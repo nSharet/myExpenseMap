@@ -102,3 +102,24 @@ test("shows the localized trend control and chart in Hebrew", async ({ page }) =
   await expect(page.locator(".trend-panel")).toBeVisible();
   await expect(page.locator("[data-testid=trend-point]").first()).toBeVisible();
 });
+
+for (const language of ["en", "he"] as const) {
+  test(`shows every Health and Insurance subsection as a separate localized series in ${language}`, async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("combobox", { name: "Language" }).selectOption(language);
+    await page.getByRole("button", { name: language === "he" ? "צפייה בנתוני הדמו" : "Explore the demo" }).click();
+    const healthLabel = language === "he" ? "בריאות וביטוח" : "Health & insurance";
+    await page.getByRole("button", { name: new RegExp(healthLabel) }).press("Enter");
+    await page.locator(".view-toggle button").nth(1).click();
+    await page.getByRole("button", { name: language === "he" ? "הצג לאורך זמן" : "View over time" }).click();
+
+    await expect(page.locator("[data-testid=trend-series]")).toHaveCount(2);
+    const expectedLabels = language === "he" ? ["בריאות ותרופות", "ביטוחים"] : ["Health & medication", "Insurance"];
+    for (const label of expectedLabels) await expect(page.locator(".trend-legend")).toContainText(label);
+    const strokes = await page.locator("[data-testid=trend-series] polyline").evaluateAll((lines) => [...new Set(lines.map((line) => line.getAttribute("stroke")))]);
+    expect(strokes).toHaveLength(2);
+    const pieColors = await page.locator(".pie-legend .legend-color").evaluateAll((items) => items.map((item) => getComputedStyle(item).backgroundColor));
+    const trendColors = await page.locator("[data-testid=trend-series]").evaluateAll((items) => items.map((item) => getComputedStyle(item.querySelector("polyline")!).stroke));
+    expect(trendColors).toEqual(pieColors);
+  });
+}
